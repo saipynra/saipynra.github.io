@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Word Counter with Duplicate Removal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .button {
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            text-align: center;
+        }
+        .stat-box {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 4px;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .stat-label {
+            color: #666;
+        }
+        .price-input {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f8f8;
+            border-radius: 4px;
+        }
+        .price-input label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .price-input input {
+            width: 100px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .price-input .currency {
+            margin-left: 8px;
+        }
+        .duplicate-count {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Word Counter with Duplicate Removal</h1>
+        
+        <div class="price-input">
+            <label for="price-per-word">Price per word:</label>
+            <input 
+                type="number" 
+                id="price-per-word" 
+                value="6" 
+                min="0" 
+                step="0.1"
+            >
+            <span class="currency">THB</span>
+        </div>
+
+        <textarea id="text-input" placeholder="Type or paste your text here..."></textarea>
+        
+        <div class="controls">
+            <button id="remove-duplicates" class="button">Remove Duplicate Words</button>
+            <span id="duplicate-info" class="duplicate-count"></span>
+        </div>
+
+        <div class="stats">
+            <div class="stat-box">
+                <div id="word-count" class="stat-number">0</div>
+                <div class="stat-label">Words</div>
+            </div>
+            <div class="stat-box">
+                <div id="char-count" class="stat-number">0</div>
+                <div class="stat-label">Characters</div>
+            </div>
+            <div class="stat-box">
+                <div id="char-no-spaces-count" class="stat-number">0</div>
+                <div class="stat-label">Characters (no spaces)</div>
+            </div>
+            <div class="stat-box">
+                <div id="total-price" class="stat-number">0</div>
+                <div class="stat-label">Total Price (THB)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('text-input');
+        const pricePerWordInput = document.getElementById('price-per-word');
+        const wordCount = document.getElementById('word-count');
+        const charCount = document.getElementById('char-count');
+        const charNoSpacesCount = document.getElementById('char-no-spaces-count');
+        const totalPrice = document.getElementById('total-price');
+        const removeDuplicatesBtn = document.getElementById('remove-duplicates');
+        const duplicateInfo = document.getElementById('duplicate-info');
+
+        function getWordCount(str) {
+            return str.trim().split(/\s+/).filter(word => word.length > 0).length;
+        }
+
+        function getCharacterCount(str) {
+            return str.length;
+        }
+
+        function getCharacterNoSpacesCount(str) {
+            return str.replace(/\s+/g, '').length;
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('th-TH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(price);
+        }
+
+        function findDuplicateWords(text) {
+            const words = text.toLowerCase().trim().split(/\s+/);
+            const wordCount = {};
+            const duplicates = new Set();
+            
+            words.forEach(word => {
+                if (word) {
+                    wordCount[word] = (wordCount[word] || 0) + 1;
+                    if (wordCount[word] > 1) {
+                        duplicates.add(word);
+                    }
+                }
+            });
+            
+            return {
+                duplicates: Array.from(duplicates),
+                count: duplicates.size
+            };
+        }
+
+        function removeDuplicateWords(text) {
+            const words = text.trim().split(/\s+/);
+            const uniqueWords = [];
+            const seenWords = new Set();
+            
+            words.forEach(word => {
+                const lowerWord = word.toLowerCase();
+                if (!seenWords.has(lowerWord) && word) {
+                    seenWords.add(lowerWord);
+                    uniqueWords.push(word);
+                }
+            });
+            
+            return uniqueWords.join(' ');
+        }
+
+        function updateCounts() {
+            const text = textInput.value;
+            const pricePerWord = parseFloat(pricePerWordInput.value) || 0;
+            const words = getWordCount(text);
+            
+            wordCount.textContent = words;
+            charCount.textContent = getCharacterCount(text);
+            charNoSpacesCount.textContent = getCharacterNoSpacesCount(text);
+            totalPrice.textContent = formatPrice(words * pricePerWord);
+
+            const duplicateResults = findDuplicateWords(text);
+            if (duplicateResults.count > 0) {
+                duplicateInfo.textContent = `Found ${duplicateResults.count} duplicate word(s)`;
+            } else {
+                duplicateInfo.textContent = '';
+            }
+        }
+
+        removeDuplicatesBtn.addEventListener('click', () => {
+            const originalText = textInput.value;
+            const cleanedText = removeDuplicateWords(originalText);
+            textInput.value = cleanedText;
+            updateCounts();
+        });
+
+        textInput.addEventListener('input', updateCounts);
+        pricePerWordInput.addEventListener('input', updateCounts);
+        
+        // Initial update
+        updateCounts();
+    </script>
+</body>
+</html>
